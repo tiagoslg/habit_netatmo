@@ -1,0 +1,17 @@
+version: "3"
+
+volumes:
+  web-media:
+  web-static:
+
+services:
+  web:
+    image: habit:latest
+    volumes:
+      - .:/app
+      - web-static:/app/staticfiles
+      - web-media:/app/media
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"

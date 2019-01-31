@@ -1,0 +1,9 @@
+-r production.txt
+
+# Test dependencies (always use the most recent version)
+pytest
+pytest-cov
+pytest-django
+pytest-sugar
+coverage
+model-mommy

@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: containers/web/Dockerfile
+      args:
+        requirements_file: development.txt
+    image: habit:latest
+    command: date
+    environment:
+      ENV: development
+
+  web:
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      ENV: development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - builder
