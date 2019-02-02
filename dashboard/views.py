@@ -1,7 +1,7 @@
+import json
 import random
-import string
 import requests
-from django.shortcuts import render
+import string
 from django.views.generic import TemplateView
 from django.conf import settings
 
@@ -17,7 +17,25 @@ class DashboardView(TemplateView):
         context['logged'] = False
         if get_dict.get('state', None) and get_dict.get('code'):
             if self.request.GET.get('state') == self.request.session.get('state'):
-                context['logged'] = True
+                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+                url = 'https://api.netatmo.com/oauth2/token'
+                data = {
+                    'grant_type': 'authorization_code',
+                    'client_id': settings.NETATMO_CLIENT_ID,
+                    'client_secret': settings.NETATMO_CLIENT_SECRET,
+                    'code': get_dict.get('code'),
+                    'redirect_uri': self.request.build_absolute_uri('?'),
+                    'scope': 'read_thermostat'
+                }
+                response = requests.post(url, headers=headers, data=data)
+                if response.status_code == 200:
+                    json_response = response.json()
+                    access_token = json_response['access_token']
+                    api_url = "https://api.netatmo.com/api/getuser?access_token={}".format(access_token)
+                    response = requests.get(api_url)
+                    user_mail = response.json()['body']['mail']
+                    context['logged'] = True
+                    context['user_mail'] = user_mail
         else:
             state = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
             self.request.session['state'] = state
