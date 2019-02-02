@@ -4,12 +4,13 @@ import requests
 import string
 from django.views.generic import TemplateView
 from django.conf import settings
+from .utils import read_thermostat
 
 # Create your views here.
 
 
-class DashboardView(TemplateView):
-    template_name = 'dashboard/dashboard.html'
+class SigninView(TemplateView):
+    template_name = 'dashboard/signin.html'
 
     def get_context_data(self, **kwargs):
         get_dict = self.request.GET
@@ -31,6 +32,9 @@ class DashboardView(TemplateView):
                 if response.status_code == 200:
                     json_response = response.json()
                     access_token = json_response['access_token']
+                    context['access_token'] = access_token
+                    context['refresh_token'] = json_response['refresh_token']
+                    context['scope'] = json_response['scope']
                     api_url = "https://api.netatmo.com/api/getuser?access_token={}".format(access_token)
                     response = requests.get(api_url)
                     user_mail = response.json()['body']['mail']
@@ -42,4 +46,13 @@ class DashboardView(TemplateView):
             context['client_id'] = settings.NETATMO_CLIENT_ID
             context['redirect_url'] = self.request.build_absolute_uri('?')
             context['state'] = state
+        return context
+
+
+class DashboardView(TemplateView):
+    template_name = 'dashboard/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['temperatures'] = read_thermostat()
         return context

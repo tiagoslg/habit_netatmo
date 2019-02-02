@@ -5,16 +5,6 @@
     <title>Title</title>
 </head>
 <body>
-{% if logged %}
-Welcome {{user_mail}}
-{% else %}
-Não Logado
-{{state}}
-<br />
-<a href="https://api.netatmo.com/oauth2/authorize?client_id={{client_id}}
-&redirect_uri={{redirect_url}}
-&scope=read_thermostat
-&state={{state}}">Logar</a>
-{% endif %}
+{{temperatures.body}}
 </body>
 </html>

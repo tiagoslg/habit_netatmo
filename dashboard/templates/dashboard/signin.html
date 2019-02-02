@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+{% if logged %}
+Welcome {{user_mail}}
+<br />access_token = {{access_token}}
+<br />refresh_token = {{refresh_token}}
+<br />scope = {{scope}}
+{% else %}
+Não Logado
+{{state}}
+<br />
+<a href="https://api.netatmo.com/oauth2/authorize?client_id={{client_id}}
+&redirect_uri={{redirect_url}}
+&scope=read_thermostat
+&state={{state}}">Logar</a>
+{% endif %}
+</body>
+</html>
