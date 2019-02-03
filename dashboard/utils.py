@@ -1,3 +1,4 @@
+import time
 import requests
 from django.conf import settings
 
@@ -60,21 +61,53 @@ def get_thermostats():
     return data
 
 
-def read_thermostat():
-    access_token = refresh_token()['access_token']
-    headers = {"Authorization": "Bearer " + access_token}
-    thermostats = get_thermostats()
-    device_id = thermostats['body']['homes'][0]['modules'][0]['id'],
-    module_id = thermostats['body']['homes'][0]['modules'][1]['id']
+def read_temperature(device_id, module_id='', start_date=None, end_date=None, access_token=None,
+                     timestamp=int(time.time())):
+    if not device_id:
+        return {'error', 'You must provide a device id'}
+    if not access_token:
+        access_token = refresh_token()['access_token']
+    if not start_date or end_date:
+        end_date = timestamp
+        start_date = end_date - 3600
 
     params = {
         'access_token': access_token,
         'device_id': device_id,
         'module_id': module_id,
         'scale': 'max',
-        'type': 'temperature,sp_temperature,boileron'
+        'type': 'temperature',
+        'date_begin': start_date,
+        'date_end': end_date
     }
 
     r = requests.get(NETATMO_GETMEASURE_URL, params=params)
 
-    return r.json()
+    return r.status_code, r.json()
+
+
+def read_station_data(device_id, module_id='', start_date=None, end_date=None, access_token=None,
+                      type_measure='', timestamp=int(time.time())):
+    if not device_id:
+        return {'error', 'You must provide a device id'}
+    if not access_token:
+        access_token = refresh_token()['access_token']
+    if not start_date or end_date:
+        end_date = timestamp
+        start_date = end_date - 24*3600
+    if not type_measure:
+        type_measure = 'temperature'
+    params = {
+        'access_token': access_token,
+        'device_id': device_id,
+        'module_id': module_id,
+        'scale': '1hour',
+        'type': type_measure.lower(),
+        'date_begin': start_date,
+        'date_end': end_date
+    }
+
+    r = requests.get(NETATMO_GETMEASURE_URL, params=params)
+
+    return r.status_code, r.json()
+

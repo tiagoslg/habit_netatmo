@@ -2,9 +2,10 @@ import json
 import random
 import requests
 import string
-from django.views.generic import TemplateView
+from django.http import JsonResponse
+from django.views.generic import TemplateView, View
 from django.conf import settings
-from .utils import get_devices
+from .utils import get_devices, read_temperature, read_station_data
 
 # Create your views here.
 
@@ -57,3 +58,63 @@ class DashboardView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['devices'] = get_devices()
         return context
+
+
+class GetThermostatTemperature(View):
+
+    def get(self, request, device_id, *args, **kwargs):
+        module_id = request.GET.get('module_id', None)
+        if not module_id:
+            status = 500
+            return JsonResponse({'error': 'You must send a module_id to read a temperature from a Thermostat'},
+                                status=status)
+        start_date = request.GET.get('start_date', None)
+        end_date = request.GET.get('end_date', None)
+        status, r = read_temperature(device_id, module_id=module_id, start_date=start_date, end_date=end_date)
+        num_mesures = r['body'].__len__()
+        if num_mesures == 0:
+            data = {
+                'found': False,
+            }
+        else:
+            data = {
+                'found': True,
+                'temperature': r['body'][num_mesures - 1]['value'][0],
+                'beg_time': r['body'][num_mesures - 1]['beg_time']
+            }
+        return JsonResponse({'status': status,
+                             'device_id': device_id,
+                             'module_id': module_id,
+                             'data': data}, status=status)
+
+
+class GetStationData(View):
+
+    def get(self, request, device_id, *args, **kwargs):
+        module_id = request.GET.get('module_id', None)
+        start_date = request.GET.get('start_date', None)
+        end_date = request.GET.get('end_date', None)
+        type_measure = request.GET.get('type_measure', None)
+        status, result = read_station_data(device_id, module_id=module_id, start_date=start_date, end_date=end_date,
+                                           type_measure=type_measure)
+        if result['body'].__len__() == 0:
+            data = {
+                'found': False,
+            }
+        else:
+            num_mesures = result['body'][0]['value'].__len__()
+            type_measure_list = type_measure.split(',')
+            result_list = result['body'][0]['value'][num_mesures - 1]
+            result_list = []
+            for i in range(0, len(type_measure_list)):
+                result_list.append({type_measure_list[i]: result['body'][0]['value'][num_mesures - 1][i]})
+            beg_time = result['body'][0]['beg_time'] + result['body'][0]['step_time'] * num_mesures - 1
+            data = {
+                'found': True,
+                'results': result_list,
+                'beg_time': beg_time
+            }
+        return JsonResponse({'status': status,
+                             'device_id': device_id,
+                             'module_id': module_id,
+                             'data': data}, status=status)
