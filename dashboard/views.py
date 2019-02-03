@@ -4,7 +4,7 @@ import requests
 import string
 from django.views.generic import TemplateView
 from django.conf import settings
-from .utils import read_thermostat
+from .utils import get_devices
 
 # Create your views here.
 
@@ -26,9 +26,10 @@ class SigninView(TemplateView):
                     'client_secret': settings.NETATMO_CLIENT_SECRET,
                     'code': get_dict.get('code'),
                     'redirect_uri': self.request.build_absolute_uri('?'),
-                    'scope': 'read_thermostat'
+                    'scope': get_dict.get('scope')
                 }
                 response = requests.post(url, headers=headers, data=data)
+                import pdb;pdb.set_trace()
                 if response.status_code == 200:
                     json_response = response.json()
                     access_token = json_response['access_token']
@@ -54,5 +55,5 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['temperatures'] = read_thermostat()
+        context['devices'] = get_devices()
         return context

@@ -124,6 +124,6 @@ NETATMO_CLIENT_ID = '5c537dfeca9d0112008bbc4c'
 NETATMO_CLIENT_SECRET = 'oJn6yTvOlsZhmULKU6IPrjrICQ9V'
 
 # TODO: Remove
-ACCESS_TOKEN = '5c371fc0ca9d010b008b8147|884f130f64e96a6ac3087d634b37ea38'
-REFRESH_TOKEN = '5c371fc0ca9d010b008b8147|cd52c87470bc557f7b46e60041c0c863'
-SCOPE = '["read_thermostat"]'
+ACCESS_TOKEN = '5c371fc0ca9d010b008b8147|daff8b3c83f619b1795cfc1f2848374e'
+REFRESH_TOKEN = '5c371fc0ca9d010b008b8147|f4f3ce858ee7b93a82c246e5793241c2'
+SCOPE = ['read_station', 'read_thermostat', 'read_camera', 'read_presence', 'read_homecoach']

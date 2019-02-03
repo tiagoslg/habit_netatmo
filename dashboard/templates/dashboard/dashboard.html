@@ -2,9 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Tiagoslg - NETATMO Dashboard</title>
 </head>
 <body>
-{{temperatures.body}}
+{{devices}}
+<table>
+    <tr>
+        <th colspan="5">
+            Stations Devices
+        </th>
+    </tr>
+    <tr>
+        <th>
+            ID
+        </th>
+        <th>
+            Name
+        </th>
+        <th>
+            Type
+        </th>
+        <th>
+            Last status
+        </th>
+        <th>
+            Data Type
+        </th>
+    </tr>
+    {% for device in devices.stations_devices %}
+    <tr>
+        <td>
+            {{device.id}}
+        </td>
+        <td>
+            {{device.name}}
+        </td>
+        <td>
+            {{device.type}}
+        </td>
+        <td>
+            {{device.last_status_store}}
+        </td>
+        <td>
+            {{device.data_type}}
+        </td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <th colspan="5">
+            Modules in homes
+        </th>
+    </tr>
+    <tr>
+        <th>
+            ID
+        </th>
+        <th>
+            Name
+        </th>
+        <th>
+            Type
+        </th>
+        <th>
+            Bridge
+        </th>
+        <th>&nbsp;</th>
+    </tr>
+    {% for module in devices.homes_modules %}
+    <tr>
+        <td>
+            {{module.id}}
+        </td>
+        <td>
+            {{module.name}}
+        </td>
+        <td>
+            {{module.type}}
+        </td>
+        <td>
+            {{module.bridge}}
+        </td>
+        <td>&nbsp;</td>
+    </tr>
+    {% endfor %}
+</table>
 </body>
 </html>
