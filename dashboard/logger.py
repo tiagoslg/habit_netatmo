@@ -36,7 +36,6 @@ class Logger:
         # create a logging format
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', "%Y-%m-%d %H:%M:%S")
         # create a file handler
-        import pdb;pdb.set_trace()
         handler = logging.FileHandler(get_log_file_name(self.user_id, self.device_id, self.type_log))
         handler.setLevel(self.level)
         handler.setFormatter(formatter)
