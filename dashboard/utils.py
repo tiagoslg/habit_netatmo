@@ -3,6 +3,11 @@ from .client_netamo import refresh_token
 
 
 def refresh_session_access_token(request):
+    """
+    refresh session access token, and update session vars
+    :param request: current request
+    :return:
+    """
     social_acc =request.user.socialaccount_set.first()
     if social_acc:
         token = social_acc.socialtoken_set.all().first()

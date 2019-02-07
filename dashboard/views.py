@@ -3,6 +3,7 @@ import datetime
 import json
 import hmac
 import hashlib
+from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
@@ -14,11 +15,11 @@ from .logger import get_log_file_name, LogTypes
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-# Create your views here.
-
 
 class AccessTokenBaseView(LoginRequiredMixin, TemplateView):
-    
+    """
+    generic view to refresh token and insert user_id in context
+    """
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         refresh_session_access_token(self.request)
@@ -30,6 +31,10 @@ class AccessTokenBaseView(LoginRequiredMixin, TemplateView):
 
 
 class DashboardView(AccessTokenBaseView):
+    """
+    render the dashboar
+    """
+
     template_name = 'dashboard/dashboard.html'
 
     def get_context_data(self, **kwargs):
@@ -41,6 +46,10 @@ class DashboardView(AccessTokenBaseView):
 
 
 class WebHooksView(AccessTokenBaseView):
+    """
+    render the list of logs
+    """
+
     template_name = 'dashboard/webhook.html'
 
     def get_context_data(self, **kwargs):
@@ -55,7 +64,10 @@ class WebHooksView(AccessTokenBaseView):
 
 
 class RefreshAccessToken(View):
-
+    """
+    View used to refresh access token after dashboard expiration period.
+    Uses request to get all the information and save new values in session
+    """
     def post(self, request, *args, **kwargs):
         refresh_session_access_token(request)
         ret = {
@@ -66,7 +78,12 @@ class RefreshAccessToken(View):
 
 
 class GetThermostatTemperature(View):
-
+    """
+    View used to get thermostat temperature
+    Params:
+    device_id: required: thermostat bridged module, get from client_netatmo.get_devices method
+    module_id: required: thermostat module_id, get from client_netatmo.get_devices method
+    """
     def get(self, request, device_id, *args, **kwargs):
         module_id = request.GET.get('module_id', None)
         if not module_id:
@@ -97,7 +114,11 @@ class GetThermostatTemperature(View):
 
 
 class GetStationData(View):
-
+    """
+    View used to get station data
+    Params:
+    device_id: required Station device_id, get from client_netatmo.get_devices method
+    """
     def get(self, request, device_id, *args, **kwargs):
         module_id = request.GET.get('module_id', None)
         type_measure = request.GET.get('type_measure', None)
@@ -128,6 +149,9 @@ class GetStationData(View):
 
 
 class GetCameraConnectionStatus(View):
+    """
+    View used to read the last camera connection status from log file
+    """
 
     def get(self, request, device_id, *args, **kwargs):
         status = 200
@@ -177,7 +201,8 @@ def webhook(request):
     x-netatmo-secret == content_hashed256_using_API_Client_secret_as_key
     """
     try:
-        secret = settings.NETATMO_CLIENT_SECRET
+        app = SocialApp.objects.filter(provider='netatmo').first()
+        secret = app.secret
         jsondata = request.body
         signature_com = hmac.new(key=secret.encode('utf-8'), msg=jsondata, digestmod=hashlib.sha256).hexdigest()
         if signature_com == request.environ['HTTP_X_NETATMO_SECRET']:

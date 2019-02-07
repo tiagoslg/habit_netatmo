@@ -147,10 +147,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 SITE_ID = 1
 
-NETATMO_CLIENT_ID = '5c537dfeca9d0112008bbc4c'
-NETATMO_CLIENT_SECRET = 'oJn6yTvOlsZhmULKU6IPrjrICQ9V'
-SOCIALACCOUNT_PROVIDERS = {'netatmo':
-    {
+SOCIALACCOUNT_PROVIDERS = {
+    'netatmo': {
         'SCOPE': ['read_station', 'read_thermostat', 'read_camera', 'read_presence', 'read_homecoach',
                   'write_thermostat']
     }
