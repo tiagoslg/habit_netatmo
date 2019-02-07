@@ -42,15 +42,15 @@
                 <hr>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="/">
+                <a class="nav-link" href="/">
                   <i class="fas fa-tachometer-alt"></i>
-                  Dashboard <span class="sr-only">(current)</span>
+                  Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/webhook_list">
+                <a class="nav-link active" href="/webhook_list">
                   <i class="fas fa-book"></i>
-                  Webhook Logs
+                  Webhook Logs <span class="sr-only">(current)</span>
                 </a>
             </li>
             <li class="nav-item text-center">
@@ -71,6 +71,13 @@
           <hr>
           <h3>Camera changing state</h3>
           {% get_log_url "camera_con_status" %}
+          <br />
+          <h3>Camera monitoring state</h3>
+          {% get_log_url "camera_mon_status" %}
+          <br />
+          <h3>Camera SD card state</h3>
+          {% get_log_url "camera_sd_card" %}
+          <br />
     </main>
   </div>
 </div>

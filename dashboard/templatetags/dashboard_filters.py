@@ -1,6 +1,7 @@
 import os
 from django import template
 from django.utils.html import format_html
+from datetime import datetime
 
 register = template.Library()
 
@@ -21,5 +22,11 @@ def get_log_url(context, type_log):
     for camera in context.get('camera_id_list', []):
         dest = '/media/{}/{}_{}.log'.format(context['user_id'], type_log, camera.replace(':', ''))
         if os.path.exists('/app{}'.format(dest)):
-            url_list.append('<a href="{}" target="_blank">Camera ID: {}</a>'.format(dest, camera))
+            date_modified = os.path.getmtime('/app{}'.format(dest))
+            date_modified = datetime.utcfromtimestamp(int(date_modified)).strftime('%Y-%m-%d %H:%M:%S')
+            url_list.append('<a href="{}" target="_blank">Camera ID: {} - modified in {}</a>'.format(dest, camera,
+                                                                                                     date_modified))
+    if not url_list:
+        url_list = ['There is no available log for that section']
+    url_list.append('<br />')
     return format_html('<br />'.join(url_list))
