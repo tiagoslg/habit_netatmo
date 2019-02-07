@@ -1,32 +1,25 @@
-<!DOCTYPE html>
+{% load static %}
+{% load dashboard_filters %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Tiagoslg - NETATMO Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
 </head>
 <body>
 <table>
     <tr>
-        <th colspan="5">
+        <th colspan="6">
             Stations Devices
         </th>
     </tr>
     <tr>
-        <th>
-            ID
-        </th>
-        <th>
-            Name
-        </th>
-        <th>
-            Type
-        </th>
-        <th>
-            Last status
-        </th>
-        <th>
-            Data Type
-        </th>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Last check</th>
+        <th>Data</th>
+        <th>Time of data</th>
     </tr>
     {% for device in devices.stations_devices %}
     <tr>
@@ -39,33 +32,29 @@
         <td>
             {{device.type}}
         </td>
-        <td>
+        <td id="{{device.id}}-last-check">
             {{device.last_status_store}}
         </td>
-        <td>
+        <td id="{{device.id}}-data">
+
+        </td>
+        <td id="{{device.id}}-data-time">
             {{device.data_type}}
         </td>
     </tr>
     {% endfor %}
     <tr>
-        <th colspan="5">
+        <th colspan="6">
             Modules in homes
         </th>
     </tr>
     <tr>
-        <th>
-            ID
-        </th>
-        <th>
-            Name
-        </th>
-        <th>
-            Type
-        </th>
-        <th>
-            Bridge
-        </th>
-        <th>&nbsp;</th>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Last check</th>
+        <th>Data</th>
+        <th>Time of data</th>
     </tr>
     {% for module in devices.homes_modules %}
     <tr>
@@ -85,5 +74,20 @@
     </tr>
     {% endfor %}
 </table>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<script src="{% static 'js/dashboard.js' %}?date=201902031940"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+    localStorage.setItem("access_token", "{{request.session.access_token}}");
+    localStorage.setItem("expires_in", "{{request.session.token_expires}}");
+{% for device in devices.stations_devices %}
+    device{{device.id|clear_id}} = new Dashboard('{{device.id}}', '', '{{device.data_type|list_to_str}}', 'station', {{device.last_status_store}});
+    device{{device.id|clear_id}}.updateTable();
+    setInterval(function(){ device{{device.id|clear_id}}.updateTable(); }, 600000);
+{% endfor %}
+});
+</script>
 </body>
 </html>

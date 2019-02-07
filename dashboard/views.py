@@ -1,13 +1,32 @@
 import json
+import time
 import random
 import requests
 import string
+from datetime import datetime
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.conf import settings
-from .utils import get_devices, read_temperature, read_station_data
+from .client_netamo import refresh_token, get_devices, read_temperature, read_station_data
 
 # Create your views here.
+
+
+class AccessTokenBaseView(TemplateView):
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        social_acc = self.request.user.socialaccount_set.first()
+        if social_acc:
+            token = social_acc.socialtoken_set.all().first()
+            app = token.app
+            client_id = app.client_id
+            client_secret = app.secret
+            access_token = refresh_token(token.token_secret, client_id, client_secret)
+            self.request.session['access_token'] = access_token.get('access_token', None)
+            self.request.session['token_expires'] = int(time.time()) + access_token.get('expire_in', 0)
+
+        return context
 
 
 class SigninView(TemplateView):
@@ -30,7 +49,6 @@ class SigninView(TemplateView):
                     'scope': get_dict.get('scope')
                 }
                 response = requests.post(url, headers=headers, data=data)
-                import pdb;pdb.set_trace()
                 if response.status_code == 200:
                     json_response = response.json()
                     access_token = json_response['access_token']
@@ -51,12 +69,14 @@ class SigninView(TemplateView):
         return context
 
 
-class DashboardView(TemplateView):
+class DashboardView(AccessTokenBaseView):
     template_name = 'dashboard/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['devices'] = get_devices()
+        access_token = self.request.session.get('access_token')
+        if access_token:
+            context['devices'] = get_devices(access_token)
         return context
 
 
@@ -95,11 +115,13 @@ class GetStationData(View):
         start_date = request.GET.get('start_date', None)
         end_date = request.GET.get('end_date', None)
         type_measure = request.GET.get('type_measure', None)
-        status, result = read_station_data(device_id, module_id=module_id, start_date=start_date, end_date=end_date,
-                                           type_measure=type_measure)
+        access_token = request.GET.get('access_token', None)
+        status, result = read_station_data(access_token, device_id, module_id=module_id, start_date=start_date,
+                                           end_date=end_date, type_measure=type_measure)
         if result['body'].__len__() == 0:
             data = {
                 'found': False,
+                'time_server': result['time_server']
             }
         else:
             num_mesures = result['body'][0]['value'].__len__()
@@ -107,8 +129,8 @@ class GetStationData(View):
             result_list = result['body'][0]['value'][num_mesures - 1]
             result_list = []
             for i in range(0, len(type_measure_list)):
-                result_list.append({type_measure_list[i]: result['body'][0]['value'][num_mesures - 1][i]})
-            beg_time = result['body'][0]['beg_time'] + result['body'][0]['step_time'] * num_mesures - 1
+                result_list.append([type_measure_list[i].title(), result['body'][0]['value'][num_mesures - 1][i]])
+            beg_time = result['body'][0]['beg_time'] + result['body'][0].get('step_time', 0) * (num_mesures - 1)
             data = {
                 'found': True,
                 'results': result_list,
@@ -117,4 +139,5 @@ class GetStationData(View):
         return JsonResponse({'status': status,
                              'device_id': device_id,
                              'module_id': module_id,
-                             'data': data}, status=status)
+                             'data': data,
+                             'time_server': result['time_server']}, status=status)

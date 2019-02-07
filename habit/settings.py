@@ -1,3 +1,4 @@
+from django.urls import reverse_lazy
 """
 Django settings for habit project.
 
@@ -14,6 +15,8 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+LOGIN_REDIRECT_URL = reverse_lazy('dashboard')
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,7 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'dashboard.apps.DashboardConfig'
+    'dashboard.apps.DashboardConfig',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'netatmo',
 ]
 
 MIDDLEWARE = [
@@ -63,10 +71,19 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
         },
     },
 ]
+
+AUTHENTICATION_BACKENDS = (
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 WSGI_APPLICATION = 'habit.wsgi.application'
 
@@ -120,10 +137,17 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# folder to get python manage.py collectstatic
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+SITE_ID = 1
+
 NETATMO_CLIENT_ID = '5c537dfeca9d0112008bbc4c'
 NETATMO_CLIENT_SECRET = 'oJn6yTvOlsZhmULKU6IPrjrICQ9V'
-
-# TODO: Remove
-ACCESS_TOKEN = '5c371fc0ca9d010b008b8147|daff8b3c83f619b1795cfc1f2848374e'
-REFRESH_TOKEN = '5c371fc0ca9d010b008b8147|f4f3ce858ee7b93a82c246e5793241c2'
-SCOPE = ['read_station', 'read_thermostat', 'read_camera', 'read_presence', 'read_homecoach']
+SOCIALACCOUNT_PROVIDERS = {'netatmo':
+    {
+        'SCOPE': ['read_station', 'read_thermostat', 'read_camera', 'read_presence', 'read_homecoach',
+                  'write_thermostat']
+    }
+}
+ACCOUNT_EMAIL_VERIFICATION = None

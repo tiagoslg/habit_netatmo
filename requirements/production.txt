@@ -1,3 +1,4 @@
 # Django
 django==2.1.5
 requests==2.21.0
+django-allauth==0.38
