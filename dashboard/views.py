@@ -1,19 +1,17 @@
-import json
-import time
 import random
 import requests
 import string
-from datetime import datetime
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.conf import settings
-from .client_netamo import refresh_token, get_devices, read_temperature, read_station_data
+from .client_netamo import get_devices, read_temperature, read_station_data
 from .utils import refresh_session_access_token
 
 # Create your views here.
 
 
-class AccessTokenBaseView(TemplateView):
+class AccessTokenBaseView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -105,7 +103,7 @@ class GetThermostatTemperature(View):
         else:
             data = {
                 'found': True,
-                'results': [['temperature', result['body'][num_mesures - 1]['value'][0]]],
+                'results': [['Temperature', result['body'][num_mesures - 1]['value'][0]]],
                 'beg_time': result['body'][num_mesures - 1]['beg_time']
             }
         return JsonResponse({'status': status,
@@ -132,7 +130,7 @@ class GetStationData(View):
             result_dict = result['body']['devices'][0]['dashboard_data']
             result_list = []
             for i in range(0, len(type_measure_list)):
-                result_list.append([type_measure_list[i].title(), result_dict.get(type_measure_list[i].title())])
+                result_list.append([type_measure_list[i].title(), result_dict.get(type_measure_list[i])])
             beg_time = result['body']['devices'][0]['last_status_store']
             data = {
                 'found': True,

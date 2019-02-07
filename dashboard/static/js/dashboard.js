@@ -6,8 +6,8 @@ class Dashboard {
         this.stationOrModule = stationOrModule;
         this.lastDataTime = lastCheck;
         this.data = '';
-        this._elCSRFToken = $('[name=csrfmiddlewaretoken]')
-        this.onDocumentReady()
+        this._elCSRFToken = $('[name=csrfmiddlewaretoken]');
+        this.onDocumentReady();
     }
 
     static timeConverter(UNIX_timestamp){
