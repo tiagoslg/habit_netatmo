@@ -1,9 +1,12 @@
+import time
+import datetime
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
 from .client_netamo import get_devices, read_temperature, read_station_data, log_camera_connection
 from .utils import refresh_session_access_token
+from .logger import get_log_file_name
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -51,7 +54,7 @@ class GetThermostatTemperature(View):
                                 status=status)
         start_date = request.GET.get('start_date', None)
         end_date = request.GET.get('end_date', None)
-        access_token = request.session.get('access_token', None)
+        access_token = request.GET.get('access_token', None)
         status, result = read_temperature(access_token, device_id, module_id=module_id, start_date=start_date,
                                           end_date=end_date)
         num_mesures = result['body'].__len__()
@@ -101,6 +104,46 @@ class GetStationData(View):
                              'module_id': module_id,
                              'data': data,
                              'time_server': result['time_server']}, status=status)
+
+
+class GetCameraConnectionStatus(View):
+
+    def get(self, request, device_id, *args, **kwargs):
+        status = 200
+        if not device_id:
+            status = 500
+            return JsonResponse({'error': 'You must send a module_id to read a temperature from a Thermostat'},
+                                status=status)
+        time_event = '--'
+        level_event = '--'
+        message = '--'
+        social_acc = request.user.socialaccount_set.first()
+        if social_acc and device_id:
+            user_id = social_acc.uid
+            f_read = open(get_log_file_name(user_id, device_id), "r")
+            f_lines = f_read.readlines()
+            f_read.close()
+            if f_lines:
+                last_line = f_lines[-1]
+                last_line = last_line.replace('\n', '')
+                line_list = last_line.split(' - ')
+                try:
+                    time_event = int(time.mktime(datetime.datetime.strptime(line_list[0],
+                                                                            "%Y-%m-%d %H:%M:%S").timetuple()))
+                    level_event = line_list[2]
+                    data = json.loads(line_list[3].replace("\'", '\"'))
+                    message = data.get('message')
+                except Exception as e:
+                    status = 500
+                    return JsonResponse({'error': 'Error on read logfile: {}'.format(e.__str__())},
+                                        status=status)
+        return JsonResponse(data={
+            'status': status,
+            'time_event': time_event,
+            'level_event': level_event,
+            'message': message,
+            'time_server': int(time.time())
+        }, status=status)
 
 
 @csrf_exempt

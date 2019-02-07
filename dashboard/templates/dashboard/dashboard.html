@@ -154,6 +154,9 @@ $(document).ready(function(){
     {% if module.bridge != '' %}
     device{{module.id|clear_id}} = new Dashboard('{{module.bridge}}', '{{module.id}}', 'temperature', 'module', Math.floor(Date.now() / 1000));
     {% endif %}
+    {% if module.type == 'NACamera' %}
+    device{{module.id|clear_id}} = new GetLogStatus('{{module.id}}');
+    {% endif %}
     {% endfor %}
 });
 </script>

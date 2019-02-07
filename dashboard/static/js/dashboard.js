@@ -1,3 +1,30 @@
+class RefreshAccessToken {
+    constructor() {
+        this._elCSRFToken = $('[name=csrfmiddlewaretoken]');
+    }
+
+    get csrfToken(){
+        return this._elCSRFToken.val()
+    }
+
+    async refreshAccessToken(){
+        await $.ajax({
+            type: 'POST',
+            url: 'refresh_access_token/',
+            data: {},
+            success: (result)=>{
+                localStorage.setItem("access_token", result.access_token);
+                localStorage.setItem("expires_in", parseInt(result.token_expires));
+            },
+            beforeSend: (xhr, settings)=>{
+                xhr.setRequestHeader("X-CSRFToken", this.csrfToken);
+            },
+            dataType: 'json'
+        });
+        return true;
+    }
+}
+
 class Dashboard {
     constructor(deviceId, moduleId, typeMeasure, stationOrModule, lastCheck) {
         this.deviceId = deviceId;
@@ -6,7 +33,6 @@ class Dashboard {
         this.stationOrModule = stationOrModule;
         this.lastDataTime = lastCheck;
         this.data = '';
-        this._elCSRFToken = $('[name=csrfmiddlewaretoken]');
         this.onDocumentReady();
     }
 
@@ -21,10 +47,6 @@ class Dashboard {
         let sec = "0" + a.getSeconds();
         let time = date.substr(-2) + ' ' + month + ' ' + year + ' ' + hour.substr(-2) + ':' + min.substr(-2) + ':' + sec.substr(-2) ;
         return time;
-    }
-
-    get csrfToken(){
-        return this._elCSRFToken.val()
     }
 
     getElementId(){
@@ -56,23 +78,6 @@ class Dashboard {
         return `get_temperature/${this.deviceId}/`
     }
 
-    async refreshAccessToken(){
-        await $.ajax({
-            type: 'POST',
-            url: 'refresh_access_token/',
-            data: {},
-            success: (result)=>{
-                localStorage.setItem("access_token", result.access_token);
-                localStorage.setItem("expires_in", parseInt(result.token_expires));
-            },
-            beforeSend: (xhr, settings)=>{
-                xhr.setRequestHeader("X-CSRFToken", this.csrfToken);
-            },
-            dataType: 'json'
-        });
-        return true;
-    }
-
     async getData(){
         let data = {
             'access_token': localStorage.getItem("access_token"),
@@ -94,7 +99,7 @@ class Dashboard {
 
     updateTable(){
         if(localStorage.getItem('expires_in') <= (Math.floor(Date.now() / 1000) + 15)){
-            $.when(this.refreshAccessToken()).done( () => {
+            $.when(RefreshAccessToken.refreshAccessToken()).done( () => {
                 this.updateTable();
             });
         } else {
@@ -116,6 +121,65 @@ class Dashboard {
 	    $(document).ready(()=>{
 	        this.updateTable();
 	        setInterval(() => { this.updateTable(); }, 600000);
+        });
+    }
+}
+
+class GetLogStatus{
+    constructor(deviceId) {
+        this.data = '';
+        this.deviceId = deviceId;
+        this.onDocumentReady();
+    }
+
+    setLastCheck(value){
+        document.getElementById(`${this.deviceId}-last-check`).innerHTML = value;
+    }
+
+    setData(value){
+        document.getElementById(`${this.deviceId}-data`).innerHTML = value;
+    }
+
+    setDataTime(value){
+        document.getElementById(`${this.deviceId}-data-time`).innerHTML = value;
+    }
+
+    async getData(){
+        await $.ajax({
+            type: 'GET',
+            url: `/get_camera_con_status/${this.deviceId}/`,
+            data: {},
+            success: (result)=>{
+                this.data = result;
+            },
+            dataType: 'json'
+        });
+    }
+
+    updateTable(){
+        if(localStorage.getItem('expires_in') <= (Math.floor(Date.now() / 1000) + 15)){
+            $.when(RefreshAccessToken.refreshAccessToken()).done( () => {
+                this.updateTable();
+            });
+        } else {
+            $.when(this.getData()).done( () =>
+            {
+                let data = this.data;
+                if (data.status === 200) {
+                    this.setLastCheck(Dashboard.timeConverter(data.time_server));
+                    this.setData(data.message);
+                    this.lastDataTime = data.time_event;
+                    this.setDataTime(Dashboard.timeConverter(this.lastDataTime));
+                }
+                return data
+            })
+        }
+    }
+
+    onDocumentReady(){
+	    $(document).ready(()=>{
+	        this.updateTable();
+	        setInterval(() => { this.updateTable(); }, 60000);
         });
     }
 }
