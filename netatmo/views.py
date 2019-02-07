@@ -44,7 +44,7 @@ class NetatmoOAuth2Adapter(OAuth2Adapter):
         extra_data = extra_data['body']
         extra_data['id'] = extra_data['_id']
         extra_data['email'] = extra_data['username'] = extra_data['mail']
-        extra_data['name'] = extra_data['mail'].split('ldkfjsal')[0]
+        extra_data['name'] = extra_data['mail'].split('@')[0]
         login = self.get_provider() \
             .sociallogin_from_response(request,
                                        extra_data)

@@ -1,3 +1,4 @@
+import logging
 import time
 import requests
 from netatmo.views import NETATMO_HOMESDATA_URL, NETATMO_STATIONSDATA_URL, NETATMO_HOMESTATUS_URL, \
@@ -86,3 +87,30 @@ def read_station_data(access_token, device_id=''):
 
     return resp.status_code, resp.json()
 
+
+def log_camera_connection(data):
+    camera_id = data.get('camera_id')
+    user_id = data.get('user_id')
+    message = data.get('message')
+    push_type = data.get('push_type')
+    import pdb;pdb.set_trace()
+    logger = logging.getLogger(__name__)
+    # verify if this log has any handlers, and clear if found
+    if (logger.hasHandlers()):
+        logger.handlers.clear()
+    level = logging.INFO
+    if data.get('event_type') == 'disconnection':
+        level = logging.WARNING
+    logger.setLevel(level)
+    # create a file handler
+    handler = logging.FileHandler('/app/{}_{}.log'.format(user_id, camera_id.replace(':', '')))
+    handler.setLevel(level)
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(handler)
+    if data.get('event_type') == 'disconnection':
+        logger.warning(data)
+    else:
+        logger.info(data)

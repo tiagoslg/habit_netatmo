@@ -1,12 +1,11 @@
-import random
-import requests
-import string
+import json
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
-from django.conf import settings
-from .client_netamo import get_devices, read_temperature, read_station_data
+from .client_netamo import get_devices, read_temperature, read_station_data, log_camera_connection
 from .utils import refresh_session_access_token
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 # Create your views here.
 
@@ -17,46 +16,6 @@ class AccessTokenBaseView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         refresh_session_access_token(self.request)
 
-        return context
-
-
-class SigninView(TemplateView):
-    template_name = 'dashboard/signin.html'
-
-    def get_context_data(self, **kwargs):
-        get_dict = self.request.GET
-        context = super().get_context_data(**kwargs)
-        context['logged'] = False
-        if get_dict.get('state', None) and get_dict.get('code'):
-            if self.request.GET.get('state') == self.request.session.get('state'):
-                headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-                url = 'https://api.netatmo.com/oauth2/token'
-                data = {
-                    'grant_type': 'authorization_code',
-                    'client_id': settings.NETATMO_CLIENT_ID,
-                    'client_secret': settings.NETATMO_CLIENT_SECRET,
-                    'code': get_dict.get('code'),
-                    'redirect_uri': self.request.build_absolute_uri('?'),
-                    'scope': get_dict.get('scope')
-                }
-                response = requests.post(url, headers=headers, data=data)
-                if response.status_code == 200:
-                    json_response = response.json()
-                    access_token = json_response['access_token']
-                    context['access_token'] = access_token
-                    context['refresh_token'] = json_response['refresh_token']
-                    context['scope'] = json_response['scope']
-                    api_url = "https://api.netatmo.com/api/getuser?access_token={}".format(access_token)
-                    response = requests.get(api_url)
-                    user_mail = response.json()['body']['mail']
-                    context['logged'] = True
-                    context['user_mail'] = user_mail
-        else:
-            state = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-            self.request.session['state'] = state
-            context['client_id'] = settings.NETATMO_CLIENT_ID
-            context['redirect_url'] = self.request.build_absolute_uri('?')
-            context['state'] = state
         return context
 
 
@@ -142,3 +101,17 @@ class GetStationData(View):
                              'module_id': module_id,
                              'data': data,
                              'time_server': result['time_server']}, status=status)
+
+
+@csrf_exempt
+@require_POST
+def webhook(request):
+    """docstring for WebHookView"""
+    jsondata = request.body
+    data = json.loads(jsondata)
+    user_id = data.get('user_id', None)
+    if user_id:
+        if data.get('event_type') in ['connection', 'disconnection'] and data.get('camera_id'):
+            log_camera_connection(data)
+
+    return HttpResponse(status=200)
