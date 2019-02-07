@@ -10,7 +10,7 @@
 <table>
     <tr>
         <th colspan="6">
-            Stations Devices
+            Stations Devices {% csrf_token %}
         </th>
     </tr>
     <tr>
@@ -67,10 +67,13 @@
         <td>
             {{module.type}}
         </td>
-        <td>
+        <td id="{{module.id}}-last-check">
+
+        </td>
+        <td id="{{module.id}}-data">
             {{module.bridge}}
         </td>
-        <td>&nbsp;</td>
+        <td id="{{module.id}}-data-time">&nbsp;</td>
     </tr>
     {% endfor %}
 </table>
@@ -81,12 +84,18 @@
 <script type="text/javascript">
 $(document).ready(function(){
     localStorage.setItem("access_token", "{{request.session.access_token}}");
-    localStorage.setItem("expires_in", "{{request.session.token_expires}}");
-{% for device in devices.stations_devices %}
+    localStorage.setItem("expires_in", {{request.session.token_expires}});
+    {% for device in devices.stations_devices %}
     device{{device.id|clear_id}} = new Dashboard('{{device.id}}', '', '{{device.data_type|list_to_str}}', 'station', {{device.last_status_store}});
-    device{{device.id|clear_id}}.updateTable();
-    setInterval(function(){ device{{device.id|clear_id}}.updateTable(); }, 600000);
-{% endfor %}
+    {% endfor %}
+    {% for module in devices.homes_modules %}
+    // {{module.bridge}}
+    {% if module.bridge != '' %}
+    device{{module.id|clear_id}} = new Dashboard('{{module.bridge}}', '{{module.id}}', 'temperature', 'module', Math.floor(Date.now() / 1000));
+    device{{module.id|clear_id}}.updateTable();
+    setInterval(function(){ device{{module.id|clear_id}}.updateTable(); }, 600000);
+    {% endif %}
+    {% endfor %}
 });
 </script>
 </body>

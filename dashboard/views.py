@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.conf import settings
 from .client_netamo import refresh_token, get_devices, read_temperature, read_station_data
+from .utils import refresh_session_access_token
 
 # Create your views here.
 
@@ -16,15 +17,7 @@ class AccessTokenBaseView(TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        social_acc = self.request.user.socialaccount_set.first()
-        if social_acc:
-            token = social_acc.socialtoken_set.all().first()
-            app = token.app
-            client_id = app.client_id
-            client_secret = app.secret
-            access_token = refresh_token(token.token_secret, client_id, client_secret)
-            self.request.session['access_token'] = access_token.get('access_token', None)
-            self.request.session['token_expires'] = int(time.time()) + access_token.get('expire_in', 0)
+        refresh_session_access_token(self.request)
 
         return context
 
@@ -80,6 +73,17 @@ class DashboardView(AccessTokenBaseView):
         return context
 
 
+class RefreshAccessToken(View):
+
+    def post(self, request, *args, **kwargs):
+        refresh_session_access_token(request)
+        ret = {
+            'access_token': request.session['access_token'],
+            'token_expires': request.session['token_expires']
+        }
+        return JsonResponse(ret, status=200)
+
+
 class GetThermostatTemperature(View):
 
     def get(self, request, device_id, *args, **kwargs):
@@ -90,8 +94,10 @@ class GetThermostatTemperature(View):
                                 status=status)
         start_date = request.GET.get('start_date', None)
         end_date = request.GET.get('end_date', None)
-        status, r = read_temperature(device_id, module_id=module_id, start_date=start_date, end_date=end_date)
-        num_mesures = r['body'].__len__()
+        access_token = request.session.get('access_token', None)
+        status, result = read_temperature(access_token, device_id, module_id=module_id, start_date=start_date,
+                                          end_date=end_date)
+        num_mesures = result['body'].__len__()
         if num_mesures == 0:
             data = {
                 'found': False,
@@ -99,38 +105,35 @@ class GetThermostatTemperature(View):
         else:
             data = {
                 'found': True,
-                'temperature': r['body'][num_mesures - 1]['value'][0],
-                'beg_time': r['body'][num_mesures - 1]['beg_time']
+                'results': [['temperature', result['body'][num_mesures - 1]['value'][0]]],
+                'beg_time': result['body'][num_mesures - 1]['beg_time']
             }
         return JsonResponse({'status': status,
                              'device_id': device_id,
                              'module_id': module_id,
-                             'data': data}, status=status)
+                             'data': data,
+                             'time_server': result['time_server']}, status=status)
 
 
 class GetStationData(View):
 
     def get(self, request, device_id, *args, **kwargs):
         module_id = request.GET.get('module_id', None)
-        start_date = request.GET.get('start_date', None)
-        end_date = request.GET.get('end_date', None)
         type_measure = request.GET.get('type_measure', None)
         access_token = request.GET.get('access_token', None)
-        status, result = read_station_data(access_token, device_id, module_id=module_id, start_date=start_date,
-                                           end_date=end_date, type_measure=type_measure)
+        status, result = read_station_data(access_token, device_id)
         if result['body'].__len__() == 0:
             data = {
                 'found': False,
                 'time_server': result['time_server']
             }
         else:
-            num_mesures = result['body'][0]['value'].__len__()
             type_measure_list = type_measure.split(',')
-            result_list = result['body'][0]['value'][num_mesures - 1]
+            result_dict = result['body']['devices'][0]['dashboard_data']
             result_list = []
             for i in range(0, len(type_measure_list)):
-                result_list.append([type_measure_list[i].title(), result['body'][0]['value'][num_mesures - 1][i]])
-            beg_time = result['body'][0]['beg_time'] + result['body'][0].get('step_time', 0) * (num_mesures - 1)
+                result_list.append([type_measure_list[i].title(), result_dict.get(type_measure_list[i].title())])
+            beg_time = result['body']['devices'][0]['last_status_store']
             data = {
                 'found': True,
                 'results': result_list,

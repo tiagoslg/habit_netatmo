@@ -76,27 +76,13 @@ def read_temperature(access_token, device_id, module_id='', start_date=None, end
     return r.status_code, r.json()
 
 
-def read_station_data(access_token, device_id, module_id='', start_date=None, end_date=None,
-                      type_measure='', timestamp=int(time.time())):
-    if not device_id:
-        return {'error', 'You must provide a device id'}
-    if not end_date:
-        end_date = timestamp
-    if not start_date:
-        start_date = end_date - 24*3600
-    if not type_measure:
-        type_measure = 'temperature'
+def read_station_data(access_token, device_id=''):
     params = {
         'access_token': access_token,
-        'device_id': device_id,
-        'module_id': module_id,
-        'scale': '1hour',
-        'type': type_measure.lower(),
-        'date_begin': int(start_date),
-        'date_end': int(end_date)
+        'device_id': device_id
     }
 
-    r = requests.get(NETATMO_GETMEASURE_URL, params=params)
+    resp = requests.get(NETATMO_STATIONSDATA_URL, params=params)
 
-    return r.status_code, r.json()
+    return resp.status_code, resp.json()
 
