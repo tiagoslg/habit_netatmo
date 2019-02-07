@@ -97,8 +97,48 @@ def log_camera_connection(data):
         level = logging.WARNING
     logger = Logger(level, user_id, camera_id,
                     type_log=LogTypes.CAMERA_CON_STATUS.__str__()).my_logger()
-
     if data.get('event_type') == 'disconnection':
         logger.warning(data)
     else:
         logger.info(data)
+
+
+def log_camera_monitoring(data):
+    camera_id = data.get('camera_id')
+    user_id = data.get('user_id')
+    level = logging.INFO
+    if data.get('event_type') == 'off':
+        level = logging.WARNING
+    logger = Logger(level, user_id, camera_id,
+                    type_log=LogTypes.CAMERA_MON_STATUS.__str__()).my_logger()
+    if data.get('event_type') == 'off':
+        logger.warning(data)
+    else:
+        logger.info(data)
+
+
+def log_camera_sd_card(data):
+    level_by_sub_type = {
+        1: logging.WARNING,
+        2: logging.INFO,
+        3: logging.INFO,
+        4: logging.INFO,
+        5: logging.ERROR,
+        6: logging.ERROR,
+        7: logging.ERROR,
+    }
+    camera_id = data.get('camera_id')
+    user_id = data.get('user_id')
+    event_type = data.get('event_type').lower()
+    if event_type == 'sd':
+        sub_type = int(data.get('sub_type', 0))
+        level = level_by_sub_type.get(sub_type, None)
+        if level:
+            logger = Logger(level, user_id, camera_id,
+                            type_log=LogTypes.CAMERA_SD_CARD.__str__()).my_logger()
+            if level == logging.WARNING:
+                logger.warning(data)
+            elif level == logging.ERROR:
+                logger.error(data)
+            else:
+                logger.info(data)

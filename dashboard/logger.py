@@ -5,6 +5,8 @@ from enum import Enum
 
 class LogTypes(Enum):
     CAMERA_CON_STATUS = 'camera_con_status'
+    CAMERA_MON_STATUS = 'camera_mon_status'
+    CAMERA_SD_CARD = 'camera_sd_card'
 
     def __str__(self):
         return str(self.value)

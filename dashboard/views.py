@@ -1,10 +1,14 @@
 import time
 import datetime
 import json
+import hmac
+import hashlib
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
-from .client_netamo import get_devices, read_temperature, read_station_data, log_camera_connection
+from .client_netamo import get_devices, read_temperature, read_station_data, log_camera_connection, \
+    log_camera_monitoring, log_camera_sd_card
 from .utils import refresh_session_access_token
 from .logger import get_log_file_name, LogTypes
 from django.views.decorators.csrf import csrf_exempt
@@ -167,12 +171,27 @@ class GetCameraConnectionStatus(View):
 @csrf_exempt
 @require_POST
 def webhook(request):
-    """docstring for WebHookView"""
-    jsondata = request.body
-    data = json.loads(jsondata)
-    user_id = data.get('user_id', None)
-    if user_id:
-        if data.get('event_type') in ['connection', 'disconnection'] and data.get('camera_id'):
-            log_camera_connection(data)
+    """
+    This view is gets the posted data received by Netatmo webhook and log the results according to the event_type.
+    There is no requested attr, but before proced with data treatment we compare:
+    x-netatmo-secret == content_hashed256_using_API_Client_secret_as_key
+    """
+    try:
+        secret = settings.NETATMO_CLIENT_SECRET
+        jsondata = request.body
+        signature_com = hmac.new(key=secret.encode('utf-8'), msg=jsondata, digestmod=hashlib.sha256).hexdigest()
+        if signature_com == request.environ['HTTP_X_NETATMO_SECRET']:
+            data = json.loads(jsondata)
+            user_id = data.get('user_id', None)
+            if user_id:
+                    event_type = data.get('event_type', '')
+                    if event_type.lower() in ['connection', 'disconnection'] and data.get('camera_id'):
+                        log_camera_connection(data)
+                    elif event_type.lower() in ['on', 'off'] and data.get('camera_id'):
+                        log_camera_monitoring(data)
+                    elif event_type.lower() in ['sd'] and data.get('camera_id'):
+                        log_camera_sd_card(data)
+    except Exception:
+        pass
 
     return HttpResponse(status=200)
