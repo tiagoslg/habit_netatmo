@@ -6,7 +6,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
 from .client_netamo import get_devices, read_temperature, read_station_data, log_camera_connection
 from .utils import refresh_session_access_token
-from .logger import get_log_file_name
+from .logger import get_log_file_name, LogTypes
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -18,7 +18,10 @@ class AccessTokenBaseView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         refresh_session_access_token(self.request)
-
+        social_acc = self.request.user.socialaccount_set.first()
+        context['user_id'] = None
+        if social_acc:
+            context['user_id'] = social_acc.uid
         return context
 
 
@@ -30,6 +33,20 @@ class DashboardView(AccessTokenBaseView):
         access_token = self.request.session.get('access_token')
         if access_token:
             context['devices'] = get_devices(access_token)
+        return context
+
+
+class WebHooksView(AccessTokenBaseView):
+    template_name = 'dashboard/webhook.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        access_token = self.request.session.get('access_token')
+        context['camera_id_list'] = None
+        if access_token:
+            devices = get_devices(access_token)
+            context['camera_id_list'] = [device['id'] for device in devices['homes_modules']
+                                         if device['type'] == 'NACamera']
         return context
 
 
@@ -120,7 +137,8 @@ class GetCameraConnectionStatus(View):
         social_acc = request.user.socialaccount_set.first()
         if social_acc and device_id:
             user_id = social_acc.uid
-            f_read = open(get_log_file_name(user_id, device_id), "r")
+            f_read = open(get_log_file_name(user_id, device_id,
+                                            LogTypes.CAMERA_CON_STATUS.__str__()), "r")
             f_lines = f_read.readlines()
             f_read.close()
             if f_lines:

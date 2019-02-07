@@ -140,6 +140,11 @@ STATIC_URL = '/static/'
 # folder to get python manage.py collectstatic
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'), )
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 SITE_ID = 1
 
 NETATMO_CLIENT_ID = '5c537dfeca9d0112008bbc4c'

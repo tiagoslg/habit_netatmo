@@ -3,7 +3,7 @@ import time
 import requests
 from netatmo.views import NETATMO_HOMESDATA_URL, NETATMO_STATIONSDATA_URL, NETATMO_HOMESTATUS_URL, \
     NETATMO_OAUTH_URL, NETATMO_AUTHORIZE_URL, NETATMO_GETMEASURE_URL
-from .logger import Logger
+from .logger import Logger, LogTypes
 
 
 def refresh_token(refresh_token, client_id, client_secret):
@@ -92,11 +92,11 @@ def read_station_data(access_token, device_id=''):
 def log_camera_connection(data):
     camera_id = data.get('camera_id')
     user_id = data.get('user_id')
-    import pdb;pdb.set_trace()
     level = logging.INFO
     if data.get('event_type') == 'disconnection':
         level = logging.WARNING
-    logger = Logger(level, user_id, camera_id).my_logger()
+    logger = Logger(level, user_id, camera_id,
+                    type_log=LogTypes.CAMERA_CON_STATUS.__str__()).my_logger()
 
     if data.get('event_type') == 'disconnection':
         logger.warning(data)
