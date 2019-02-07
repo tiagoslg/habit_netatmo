@@ -18,12 +18,13 @@
       }
     </style>
     <link rel="stylesheet" href="https://getbootstrap.com/docs/4.2/examples/dashboard/dashboard.css"  crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 </head>
 <body>
 <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
   <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Challenge Tiago Gomes</a>
   <ul class="navbar-nav px-3">
-    <li class="nav-item text-nowrap">
+      <li class="nav-item text-nowrap">
       <a class="nav-link" href="/accounts/logout">Sign out</a>
     </li>
   </ul>
@@ -33,10 +34,26 @@
     <nav class="col-md-2 d-none d-md-block bg-light sidebar">
       <div class="sidebar-sticky">
         <ul class="nav flex-column">
+            <li class="nav-item text-center">
+                <i class="fas fa-user-circle fa-3x"></i><br />
+                {{request.user}}
+            </li>
+            <li class="nav-item text-center">
+                <hr>
+            </li>
             <li class="nav-item">
                 <a class="nav-link active" href="#">
-                  <span data-feather="home"></span>
+                  <i class="fas fa-tachometer-alt"></i>
                   Dashboard <span class="sr-only">(current)</span>
+                </a>
+            </li>
+            <li class="nav-item text-center">
+                <hr>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/accounts/logout">
+                  <i class="fas fa-sign-out-alt"></i>
+                  Sign out
                 </a>
             </li>
         </ul>
