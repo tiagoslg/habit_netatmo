@@ -169,7 +169,9 @@ class GetLogStatus{
                     this.setLastCheck(Dashboard.timeConverter(data.time_server));
                     this.setData(data.message);
                     this.lastDataTime = data.time_event;
-                    this.setDataTime(Dashboard.timeConverter(this.lastDataTime));
+                    if (Number.isInteger(this.lastDataTime)){
+                        this.setDataTime(Dashboard.timeConverter(this.lastDataTime));
+                    }
                 }
                 return data
             })
