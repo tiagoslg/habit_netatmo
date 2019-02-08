@@ -22,20 +22,24 @@ Pay attention to linux post install instructions:
 - Access the folder
 - Run `make set_env_development` to setup the development environment 
 (this project is not ready to run production env)
-- Run `make deploy` this command will check the environment, build the project
-using docker-compose and docker-compose-override files, restart docker, run all 
-the migrations, collect static files
+- Run `make deploy` this command will:
+
+    - check the environment set, 
+    - build the project using docker-compose and docker-compose-override files,
+    - restart docker, 
+    - run all migrations, 
+    - collect static files
 
 If you want to start with some data in your database:
 - Run `make loaddata` this will load the fixtures with the initial data
 
-The project will start at http://localhost:8000
+The project will starts at http://localhost:8000
 
 ## Endpoints
 
 - get_temperature/<str:device_id>/?access_token=<str:acess_token>&module_id=<str:module_id> 
 
-This endpoint get the temperature from a Thermostat. Module_id is required 
+This endpoint gets the temperature from a Thermostat. Module_id is required 
 in order to complet the measure View used to get thermostat temperature
 
 
@@ -49,7 +53,7 @@ in order to complet the measure View used to get thermostat temperature
 ---------------------------------------------------------------------
 - get_station/<str:device_id>/?access_token=<str:acess_token>
 
-This endpoint get the temperature from a Station. 
+This endpoint gets the temperature from a Station. 
 
     Params:
     - access_token required: User session access_token
@@ -60,7 +64,7 @@ This endpoint get the temperature from a Station.
 ---------------------------------------------------------------------
 - get_camera_con_status/<str:device_id>/
 
-This endpoint read the Log from camera connection and return the last status in log file. 
+This endpoint reads the Log from camera connection, if it exists, and returns the last status present in log file. 
 
     Params:
     - device_id required: camera device_id, got from client_netatmo.get_devices method
