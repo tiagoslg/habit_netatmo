@@ -1,6 +1,8 @@
 # Tiago Gomes habit_netatmo
 Connect to NETATMO API using Python/Django
 
+Example development project: http://34.199.52.187:8000/
+
 ## Requirements
 This project requires Docker and Docker compose. Both **must be installed** on local machine
 
@@ -64,3 +66,40 @@ This endpoint read the Log from camera connection and return the last status in 
     - device_id required: camera device_id, got from client_netatmo.get_devices method
     
 ---------------------------------------------------------------------
+
+## Webhook
+The webhook address is configured in My app area on Netatmo user dashboard. For the purpouse of this 
+example project, we are using a HTTP address, so it's only possible to receive data from the creator
+account.
+
+### Webhook address
+
+- http://34.199.52.187:8000/webhook_client/
+
+Gets the posted data received by Netatmo webhook and log the results according to the event_type.
+
+There is no requested attr, but before proced with data treatment it's made a security check on backend
+comparing the x-netatmo-secret, received on Header with the Hash256 of the content, using the Client 
+Secret as Key:
+- x-netatmo-secret == content_hashed256_using_API_Client_secret_as_key
+
+### Webhook logs <url: /webhook_list/>
+
+- Camera changing state: Stores Connection and Disconnection events from user's cameras each camera will create a 
+different log file: 
+
+    - Connection event will store an Info log level
+    - Disconection event will store a Warning log level
+
+- Camera monitoring state: Stores On ad Off events from user's cameras each camera will create a 
+different log file:
+
+    - On event will store an Info log level
+    - Off event will store a Warning log level
+
+- Camera SD card state: Stores SD event from user's cameras each camera will create a 
+different log file. The log levels here are according to the sub_types:
+
+    - Sub_type 1 will store a Warning log level
+    - Sub_type 2, 3 or 4 will store an Info log level
+    - Sub_type 5, 6 or 7 will store an Error log level
