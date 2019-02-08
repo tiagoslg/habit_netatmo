@@ -1,3 +1,4 @@
+import os
 import time
 import datetime
 import json
@@ -168,24 +169,27 @@ class GetCameraConnectionStatus(View):
         social_acc = request.user.socialaccount_set.first()
         if social_acc and device_id:
             user_id = social_acc.uid
-            f_read = open(get_log_file_name(user_id, device_id,
-                                            LogTypes.CAMERA_CON_STATUS.__str__()), "r")
-            f_lines = f_read.readlines()
-            f_read.close()
-            if f_lines:
-                last_line = f_lines[-1]
-                last_line = last_line.replace('\n', '')
-                line_list = last_line.split(' - ')
-                try:
-                    time_event = int(time.mktime(datetime.datetime.strptime(line_list[0],
-                                                                            "%Y-%m-%d %H:%M:%S").timetuple()))
-                    level_event = line_list[2]
-                    data = json.loads(line_list[3].replace("\'", '\"'))
-                    message = data.get('message')
-                except Exception as e:
-                    status = 500
-                    return JsonResponse({'error': 'Error on read logfile: {}'.format(e.__str__())},
-                                        status=status)
+            dest = get_log_file_name(user_id, device_id,
+                                            LogTypes.CAMERA_CON_STATUS.__str__())
+            if os.path.exists(dest):
+                f_read = open(get_log_file_name(user_id, device_id,
+                                                LogTypes.CAMERA_CON_STATUS.__str__()), "r")
+                f_lines = f_read.readlines()
+                f_read.close()
+                if f_lines:
+                    last_line = f_lines[-1]
+                    last_line = last_line.replace('\n', '')
+                    line_list = last_line.split(' - ')
+                    try:
+                        time_event = int(time.mktime(datetime.datetime.strptime(line_list[0],
+                                                                                "%Y-%m-%d %H:%M:%S").timetuple()))
+                        level_event = line_list[2]
+                        data = json.loads(line_list[3].replace("\'", '\"'))
+                        message = data.get('message')
+                    except Exception as e:
+                        status = 500
+                        return JsonResponse({'error': 'Error on read logfile: {}'.format(e.__str__())},
+                                            status=status)
         return JsonResponse(data={
             'status': status,
             'time_event': time_event,
