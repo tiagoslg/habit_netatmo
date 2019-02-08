@@ -7,7 +7,10 @@ check_compose_override:
 collectstatic:
 	docker-compose run web python manage.py collectstatic --noinput
 
-deploy: check_compose_override build restart migrate collectstatic load_fixtures
+deploy: check_compose_override build restart migrate collectstatic
+
+loaddata:
+	docker-compose run web python manage.py loaddata dashboard/fixtures/initial_data.json
 
 migrate:
 	docker-compose run web python manage.py migrate --noinput

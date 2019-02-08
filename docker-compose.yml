@@ -11,6 +11,7 @@ services:
       - .:/app
       - web-static:/app/staticfiles
       - web-media:/app/media
+      - ./media/logs:/app/media/logs
     logging:
       driver: "json-file"
       options:

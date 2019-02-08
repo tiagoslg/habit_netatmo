@@ -81,8 +81,11 @@ class GetThermostatTemperature(View):
     """
     View used to get thermostat temperature
     Params:
-    device_id: required: thermostat bridged module, get from client_netatmo.get_devices method
-    module_id: required: thermostat module_id, get from client_netatmo.get_devices method
+    access_token required: User session access_token
+    device_id required: thermostat bridged module, get from client_netatmo.get_devices method
+    module_id required: thermostat module_id, get from client_netatmo.get_devices method
+    start_date optional: timestamp from start date
+    end_date optional: timestamp from end date
     """
     def get(self, request, device_id, *args, **kwargs):
         module_id = request.GET.get('module_id', None)
