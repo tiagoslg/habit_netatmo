@@ -24,7 +24,7 @@ Pay attention to linux post install instructions:
 using docker-compose and docker-compose-override files, restart docker, run all 
 the migrations, collect static files
 
-If you want to start with some data:
+If you want to start with some data in your database:
 - Run `make loaddata` this will load the fixtures with the initial data
 
 The project will start at http://localhost:8000
