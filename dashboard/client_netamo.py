@@ -181,3 +181,12 @@ def log_camera_sd_card(data):
                 logger.error(data)
             else:
                 logger.info(data)
+
+
+def general_log(data):
+    level = logging.INFO
+    camera_id = data.get('camera_id')
+    user_id = data.get('user_id')
+    logger = Logger(level, user_id, camera_id,
+                    type_log=LogTypes.GENERAL.__str__()).my_logger()
+    logger.info(data)

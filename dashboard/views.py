@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
 from .client_netamo import get_devices, read_temperature, read_station_data, log_camera_connection, \
-    log_camera_monitoring, log_camera_sd_card
+    log_camera_monitoring, log_camera_sd_card, general_log
 from .utils import refresh_session_access_token
 from .logger import get_log_file_name, LogTypes
 from django.views.decorators.csrf import csrf_exempt
@@ -223,6 +223,8 @@ def webhook(request):
                         log_camera_monitoring(data)
                     elif event_type.lower() in ['sd'] and data.get('camera_id'):
                         log_camera_sd_card(data)
+                    else:
+                        general_log(data)
     except Exception:
         pass
 
