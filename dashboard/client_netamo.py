@@ -41,7 +41,7 @@ def get_devices(access_token):
         'stations_devices': [],
         'homes_modules': []
     }
-    for device in data['body']['devices']:
+    for device in data['body'].get('devices', []):
         device_list['stations_devices'].append({
             'id': device['_id'],
             'type': device['type'],
@@ -51,8 +51,8 @@ def get_devices(access_token):
         })
     resp = requests.get(NETATMO_HOMESDATA_URL, headers=headers)
     data = resp.json()
-    for home in data['body']['homes']:
-        for module in home['modules']:
+    for home in data['body'].get('homes', []):
+        for module in home.get('modules', []):
             device_list['homes_modules'].append({
                 'id': module['id'],
                 'type': module['type'],
