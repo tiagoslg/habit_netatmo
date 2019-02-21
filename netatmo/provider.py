@@ -1,7 +1,7 @@
 from allauth.account.models import EmailAddress
-from allauth.socialaccount.app_settings import QUERY_EMAIL
-from allauth.socialaccount.providers.base import AuthAction, ProviderAccount
+from allauth.socialaccount.providers.base import ProviderAccount
 from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
+
 
 class NetAtMoAccount(ProviderAccount):
     def to_str(self):
@@ -17,8 +17,6 @@ class NetAtMoProvider(OAuth2Provider):
     def get_default_scope(self):
         scope = ['read_station']
         return scope
-
-        return ret
 
     def extract_uid(self, data):
         return str(data['id'])

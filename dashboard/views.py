@@ -5,7 +5,6 @@ import json
 import hmac
 import hashlib
 from allauth.socialaccount.models import SocialApp
-from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
